@@ -17,14 +17,13 @@ app.get("/", (req, res) => {
 });
 
 // PDF generator function using Puppeteer and Handlebars
-const pdfGenerator = async (fileName, data) => {
+const pdfGenerator = async ({ fileName, data, templatePath }) => {
   try {
     const browser = await puppeteer.launch({
       args: ["--no-sandbox"],
       headless: "new", // Keeps Puppeteer in headless mode
     });
     const page = await browser.newPage();
-    const templatePath = path.join(__dirname, "public", "index.html"); //
     const templateHtml = await fs.readFile(templatePath, "utf-8");
 
     const template = hbs.compile(templateHtml); // Compile Handlebars template with data
@@ -35,7 +34,7 @@ const pdfGenerator = async (fileName, data) => {
     await page.emulateMediaType("screen");
 
     // Ensure 'generatedFile' directory exists
-    const outputDir = path.join(process.cwd(), "generatedFile");
+    const outputDir = path.join(process.cwd(), "certificates");
     await fs.ensureDir(outputDir); // Create directory if it doesn't exist
 
     // Generate the file path for the PDF
@@ -59,16 +58,17 @@ const pdfGenerator = async (fileName, data) => {
 };
 
 // Sample data to use for Handlebars template
-let data = {
-  name: "Shakib Al Hasan",
-  date: "16.09.2024",
-};
 
 // Route to generate PDF
 app.get("/generate-pdf", async (req, res) => {
   const fileName = `certificket${Date.now()}`;
   try {
-    const filePath = await pdfGenerator(fileName, data);
+    let data = {
+      name: "Shakib Al Hasan",
+      date: "16.09.2024",
+    };
+    const templatePath = path.join(__dirname, "public", "index.html"); //
+    const filePath = await pdfGenerator({ fileName, data, templatePath });
     res.download(filePath, (err) => {
       if (err) {
         console.error("Error while sending file to the client:", err);
